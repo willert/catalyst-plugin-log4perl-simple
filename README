@@ -1,0 +1,145 @@
+NAME
+    Catalyst::Plugin::Log4perl::Simple - Logging and monitoring for Catalyst
+
+SYNOPSIS
+     package MyApp;
+
+     # without any config, this will create a default
+     # Catalyst::Log::Log4perl instance on setup
+     use Catalyst (
+       # your plug-ins here
+       Log4perl::Extended
+     );
+
+     # you can just enable exception reporting like this:
+     MyApp->config(
+       log4perl => { error_logger => { recipient => 'me@example.com' }}
+     );
+
+     # ... or additionally chose another dispatcher
+     MyApp->config(
+       log4perl => {
+         error_logger => {
+           recipient => 'me@example.com',
+           class     => 'Log::Dispatch::Email::MailSend',
+         }
+       }
+     );
+
+
+     # .. or use a full fledged Log4perl-style config:
+     MyApp->config(
+       log4perl => {
+         root_logger => [qw/ INFO screen /],
+         appender => {
+           screen => {
+             class  => 'Log::Log4perl::Appender::ScreenColoredLevels',
+             layout => 'PatternLayout',
+             'layout.ConversionPattern' =>  '[%p] %F:%L %n%m%n%n',
+           }
+         }
+       }
+     );
+
+DESCRIPTION
+    Catalyst::Plugin::Log4perl::Simple augments the standard
+    Catalyst::Log::Log4perl logger with some useful functionality that
+    depends on mucking around with the dispatch cycle like redirecting
+    warning messages and flushing the logger when appropriate.
+
+    Additionally an error reporting facility is provided that is able to
+    provide a detailed contextual report (similar to the error page rendered
+    in debug mode) on errors via email or other logging facilities.
+
+    And as final sugarcoating, Catalyst::Plugin::Log4perl::Simple supports
+    configuring Log4perl directly form your application config, which also
+    allows to e.g. better distinguish production and development log
+    settings.
+
+METHODS
+    None, Catalyst::Plugin::Log4perl::Simple does its job purely with
+    overriding Catalyst internals.
+
+CHANGES TO THE DISPATCH CYCLE
+  $self->setup
+    Builds a log4perl config hash out of your application config initializes
+    the logger and precomputes some internal data structures.
+
+  $self->dispatch
+    Redirects warnings to the current Catalyst::Log instance through a
+    localized warning handler. If this fails, the warnings are emitted
+    normally.
+
+  $self->finalize
+    Flushes all appender instances that are Log::Dispatch::Email subclasses
+    so we get one email per request (this can a a whole lot so make sure
+    your logging threshold is set high enough)
+
+CONFIGURATION FORMAT
+    Catalyst::Plugin::Log4perl::Simple tries to emulate the property format
+    of Log::Log4perl as close as possible while using config hashes.
+    Basically, Catalyst::Plugin::Log4perl::Simple just joins the path to a
+    hash value while leaving out keys named 'class' in the appender section.
+    This means you could either write:
+
+      $config->{log4perl}{appender}{example} = {
+        class  => 'Log::Log4perl::Appender::Screen',
+        layout => 'Log::Log4perl::Layout::SimpleLayout',
+      };
+
+    or:
+
+      $config->{log4perl}{appender} = {
+        'example'        => 'Log::Log4perl::Appender::Screen',
+        'example.layout' => 'Log::Log4perl::Layout::SimpleLayout',
+      };
+
+    to build this Log::Log4perl::Config file:
+
+     log4perl.appender.example=Log::Log4perl::Appender::Screen
+     log4perl.appender.example.layout=Log::Log4perl::Layout::SimpleLayout
+
+    Additionally, every key-value-pair under the root key "options" will be
+    passed on to Catalyst::Log::Log4perl's "new()" method and everything
+    under "error_logger" is used to configure the error reporting facility
+    (see below).
+
+CONFIGURING THE ERROR REPORTER
+    When "$c-"config->{log4perl}{error_logger}> is set to some other value
+    then 'off', Catalyst::Plugin::Log4perl::Simple assumes it should created
+    detailed error reports.
+
+    When "error_logger" is a string, Catalyst::Plugin::Log4perl::Simple
+    tries to log directly to the appender with this name. When
+    "error_logger" evaluates to a hash reference, a default
+    Log::Dispatch::Email::MailSend appender is created.
+
+    When using the second approach, you need to at least set "recipient" in
+    "error_logger" to specify where the error report should be send. Further
+    options are: "subject", "class", "threshold", "layout", "pattern" where
+    class specifies an alternative default appender and pattern an
+    Log::Log4perl::Layout::PatternLayout spec.
+
+BUGS
+    Plenty, I guess. This is a pre-release version of
+    Catalyst::Plugin::Log4perl::Simple and hasn't seen wide-spread testing.
+
+SOURCE AVAILABILITY
+    This code is in Github:
+
+     git://github.com/willert/catalyst-plugin-log4perl-simple.git
+
+SEE ALSO
+    <http://github.com/willert/catalyst-plugin-log4perl-simple/>,
+    Catalyst::Log, Catalyst::Log::Log4perl, Log::Log4perl,
+    Log::Dispatch::Email, Log::Dispatch::Email::MailSend,
+
+AUTHOR
+    Sebastian Willert, "willert@cpan.org"
+
+COPYRIGHT AND LICENSE
+    Copyright 2009 by Sebastian Willert <willert@cpan.org>
+
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
