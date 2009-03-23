@@ -27,13 +27,16 @@ BEGIN {
   };
 }
 
-use FindBin qw($Bin);
-use lib "$Bin/../lib";
-use lib "$Bin/lib";
+use FindBin;
+use lib "$FindBin::Bin/lib";
 
 use Test::WWW::Mechanize::Catalyst 'TestApp';
-my $mech = Test::WWW::Mechanize::Catalyst->new();
 
+# suppress warnings from next that seem to occure between compile and run-time
+BEGIN{ $SIG{__WARN__} = sub{} }; $SIG{__WARN__} = undef;
+
+
+my $mech = Test::WWW::Mechanize::Catalyst->new();
 my $tlogger = Test::Log4perl->get_logger("TestApp.Controller.Root");
 
 # prefetching the logger seems to be needed to ensure that
