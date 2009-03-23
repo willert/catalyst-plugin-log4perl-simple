@@ -82,6 +82,7 @@ use Sub::Recursive;
 use Data::Dumper;
 use Encode;
 
+use Data::Visitor::Callback;
 use Catalyst::Log::Log4perl '1.0';
 use MRO::Compat;
 
@@ -120,8 +121,9 @@ sub setup {
       } elsif ( ref $_[0] eq 'ARRAY' ) {
         $REC->( join( ', ', @{ $_[0] } ), $path );
       } else {
-        $path =~ s/appender\.([^.]+)\.class/appender.${1}/;
+        $path =~ s/appender\.(.+)\.class/appender.${1}/;
         $path =~ s/threshold$/Threshold/;
+        $path =~ s/\.pattern$/.ConversionPattern/;
         $path =~ s/root_logger$/rootLogger/;
         $log4perl_conf{ $path } = $_[0];
       }
@@ -199,7 +201,7 @@ sub setup {
 
   my $catalyst_logger = do{
     if ( %log4perl_conf ) {
-      Catalyst::Log::Log4perl->new( \%log4perl_conf );
+      Catalyst::Log::Log4perl->new( \%log4perl_conf, %log4perl_args );
     } else {
       my $config_path = $find_logger_conf->();
       $self->log->info( "Falling back to property file ${config_path}" );
@@ -251,12 +253,15 @@ so make sure your logging threshold is set high enough)
 
 sub finalize {
   my $self = shift;
+
+  #$self->log->warn('Flushing logger');
+  $self->log->_flush unless $self->log->{abort};
+
   # propagate global flush to appenders that suppert this method (e.g. to send
   # a buffered log message collection as email) after everyone else finalized
   my $flush_loggers = !@error_loggers ? undef : Scope::Guard->new(
     sub{
       return if $self->debug;
-      $self->log->_flush unless $self->log->{abort};
 
       for my $logger ( values %email_appender ) {
         local $SIG{CHLD} = 'DEFAULT';

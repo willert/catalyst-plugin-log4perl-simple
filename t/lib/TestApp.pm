@@ -4,10 +4,7 @@ use warnings;
 
 use Catalyst qw/Log4perl::Simple/;
 
-sub import {
-  my $into = shift;
-  __PACKAGE__->config( @_ );
-  __PACKAGE__->setup;
-};
+__PACKAGE__->config( name => 'TestApp', log4perl => $ENV{TEST_LOG4PERL} );
+__PACKAGE__->setup;
 
 1;
