@@ -1,5 +1,13 @@
 package Catalyst::Plugin::Log4perl::Simple;
 
+use strict;
+use warnings;
+
+BEGIN { require 5.008001; }
+
+use version;
+our $VERSION = '0.01';
+
 =pod
 
 =head1 NAME
@@ -64,16 +72,7 @@ supports configuring Log4perl directly form your application config,
 which also allows to e.g. better distinguish production and development
 log settings.
 
-=head1 METHODS
-
-None, B<Catalyst::Plugin::Log4perl::Simple> does its job purely
-with overriding Catalyst internals.
-
 =cut
-
-use strict;
-use warnings;
-use version;
 
 use Carp;
 use Scalar::Util qw/blessed/;
@@ -86,9 +85,10 @@ use Data::Visitor::Callback;
 use Catalyst::Log::Log4perl '1.0';
 use MRO::Compat;
 
-my %ignore_classes;
-my @error_loggers;
-my %email_appender;
+=head1 METHODS
+
+None, B<Catalyst::Plugin::Log4perl::Simple> does its job purely
+with overriding Catalyst internals.
 
 =head1 CHANGES TO THE DISPATCH CYCLE
 
@@ -98,6 +98,10 @@ Builds a log4perl config hash out of your application config
 initializes the logger and precomputes some internal data structures.
 
 =cut
+
+my %ignore_classes;
+my @error_loggers;
+my %email_appender;
 
 sub setup {
   my $self = shift;

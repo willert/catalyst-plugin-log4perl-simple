@@ -1,4 +1,6 @@
-use inc::Module::Install;
+use inc::Module::Install 0.77;
+
+perl_version '5.008001';
 
 name 'Catalyst-Plugin-Log4perl-Simple';
 all_from 'lib/Catalyst/Plugin/Log4perl/Simple.pm';
